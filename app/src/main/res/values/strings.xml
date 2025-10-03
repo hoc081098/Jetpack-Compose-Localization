@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Jetpack Compose Localization</string>
+    <string name="current_locale_language_country">Current locale: %1$s, language: %2$s, country: %3$s, languageTag: %4$s</string>
+</resources>
