@@ -39,7 +39,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import java.util.Locale
 
-private const val FOLLOW_SYSTEM = "FOLLOW_SYSTEM"
 
 class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,22 +52,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     lifecycle.eventFlow
-      .onEach { Log.d("MainActivity", ">>> lifecycle event: $it") }
+      .onEach { Log.d("MainActivity", ">>> $this -> lifecycle event: $it") }
       .launchIn(lifecycleScope)
   }
 }
+
+private const val FOLLOW_SYSTEM = "Language#FollowSystem"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreen(modifier: Modifier = Modifier) {
   val locale = currentLocale()
+
+  // Check if we're following the system locale
+  val isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty
+
   val supportedLanguages = BuildConfig.SUPPORTED_LANGUAGE_CODES
     .split(",")
     .sorted()
-  
-  // Check if we're following the system locale
-  val applicationLocales = AppCompatDelegate.getApplicationLocales()
-  val isFollowingSystem = applicationLocales.isEmpty
 
   Scaffold(
     modifier = modifier,
@@ -86,20 +87,7 @@ private fun MainScreen(modifier: Modifier = Modifier) {
       contentAlignment = Alignment.Center,
     ) {
       Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-          text = stringResource(
-            R.string.current_locale_language_country,
-            locale,
-            locale.language,
-            locale.country,
-            locale.toLanguageTag(),
-          ),
-          style = MaterialTheme.typography.titleLarge,
-          textAlign = TextAlign.Center,
-        )
+        Header(locale = locale, isFollowingSystem = isFollowingSystem)
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -109,52 +97,14 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             .weight(1f),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-          // Follow system option
-          Text(
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(horizontal = 16.dp)
-              .clip(MaterialTheme.shapes.medium)
-              .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline,
-                shape = MaterialTheme.shapes.medium,
-              )
-              .clickable(onClick = { changeLanguage(FOLLOW_SYSTEM) })
-              .padding(16.dp),
-            text = stringResource(R.string.follow_system) + if (isFollowingSystem) " (current language)" else "",
-            style = if (isFollowingSystem) {
-              MaterialTheme.typography.titleLarge.copy(
-                color = MaterialTheme.colorScheme.primary,
-              )
-            } else {
-              MaterialTheme.typography.titleMedium
-            },
+          LanguageOption(
+            language = FOLLOW_SYSTEM,
+            isCurrent = isFollowingSystem,
           )
-          
           supportedLanguages.fastForEach { language ->
-            val isCurrent = !isFollowingSystem && locale.language == language
-
-            Text(
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clip(MaterialTheme.shapes.medium)
-                .border(
-                  width = 1.dp,
-                  color = MaterialTheme.colorScheme.outline,
-                  shape = MaterialTheme.shapes.medium,
-                )
-                .clickable(onClick = { changeLanguage(language) })
-                .padding(16.dp),
-              text = language + if (isCurrent) " (current language)" else "",
-              style = if (isCurrent) {
-                MaterialTheme.typography.titleLarge.copy(
-                  color = MaterialTheme.colorScheme.primary,
-                )
-              } else {
-                MaterialTheme.typography.titleMedium
-              },
+            LanguageOption(
+              language = language,
+              isCurrent = !isFollowingSystem && locale.language == language,
             )
           }
         }
@@ -163,14 +113,67 @@ private fun MainScreen(modifier: Modifier = Modifier) {
   }
 }
 
+@Composable
+private fun LanguageOption(language: String, isCurrent: Boolean, modifier: Modifier = Modifier) {
+  Text(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp)
+      .clip(MaterialTheme.shapes.medium)
+      .border(
+        width = 1.dp,
+        color = MaterialTheme.colorScheme.outline,
+        shape = MaterialTheme.shapes.medium,
+      )
+      .clickable(onClick = { changeLanguage(language) })
+      .padding(16.dp),
+    text = buildString {
+      append(if (language == FOLLOW_SYSTEM) stringResource(R.string.follow_system) else language)
+      append(if (isCurrent) " (current language)" else "")
+    },
+    style = if (isCurrent) {
+      MaterialTheme.typography.titleLarge.copy(
+        color = MaterialTheme.colorScheme.primary,
+      )
+    } else {
+      MaterialTheme.typography.titleMedium
+    },
+  )
+}
+
+@Composable
+private fun Header(locale: Locale, isFollowingSystem: Boolean, modifier: Modifier = Modifier) {
+  Text(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp),
+    text = buildString {
+      append(
+        stringResource(
+          R.string.current_locale_language_country,
+          locale,
+          locale.language,
+          locale.country,
+          locale.toLanguageTag(),
+        )
+      )
+      append(if (isFollowingSystem) " (following system)" else "")
+    },
+    style = MaterialTheme.typography.titleLarge,
+    textAlign = TextAlign.Center,
+  )
+}
+
 private fun changeLanguage(language: String) {
   if (language == FOLLOW_SYSTEM) {
     Log.d("MainActivity", ">>> setApplicationLocales: to system default (empty)")
+
     // Set empty locale list to follow system
     AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
   } else {
     val locale = Locale(language)
       .also { Log.d("MainActivity", ">>> setApplicationLocales: to $it") }
+
     AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale))
   }
 
