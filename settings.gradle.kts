@@ -21,3 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Jetpack Compose Localization"
 include(":app")
+
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version ("1.0.0")
+}
