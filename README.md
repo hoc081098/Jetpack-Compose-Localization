@@ -2,6 +2,8 @@
 
 A production-ready Android application demonstrating advanced localization techniques including runtime language switching, locale-aware datetime formatting with ICU skeletons, and intelligent caching—all built with Jetpack Compose.
 
+[![Android CI](https://github.com/hoc081098/Jetpack-Compose-Localization/actions/workflows/android.yml/badge.svg)](https://github.com/hoc081098/Jetpack-Compose-Localization/actions/workflows/android.yml)
+
 ## Overview
 
 This project showcases **best practices** for implementing localization in modern Android applications. Beyond basic language switching, it demonstrates production-ready patterns including:
