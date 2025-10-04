@@ -4,6 +4,13 @@ plugins {
   alias(libs.plugins.kotlin.compose)
 }
 
+kotlin {
+  jvmToolchain {
+    version = JavaLanguageVersion.of(21)
+    vendor = JvmVendorSpec.AZUL
+  }
+}
+
 val SUPPORTED_LOCALES = setOf(
   "en",
   "en-rUS",
