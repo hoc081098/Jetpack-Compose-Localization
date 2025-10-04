@@ -4,16 +4,25 @@ plugins {
   alias(libs.plugins.kotlin.compose)
 }
 
-val SUPPORTED_LOCALES = setOf(
-  "en",
-  "en-rUS",
-  "vi",
-  "vi-rVN",
-)
+kotlin {
+  jvmToolchain {
+    languageVersion = JavaLanguageVersion.of(21)
+    vendor = JvmVendorSpec.AZUL
+  }
+}
 
-val SUPPORTED_LANGUAGE_CODES = SUPPORTED_LOCALES
-  .mapTo(LinkedHashSet()) { it.substringBefore("-r") }
-  .joinToString(separator = ",", prefix = "\"", postfix = "\"")
+object Locales {
+  val supportedLocales: Set<String> = setOf(
+    "en",
+    "en-rUS",
+    "vi",
+    "vi-rVN",
+  )
+
+  val supportedLanguageCodes: String = supportedLocales
+    .mapTo(LinkedHashSet()) { it.substringBefore("-r") }
+    .joinToString(separator = ",", prefix = "\"", postfix = "\"")
+}
 
 android {
   namespace = "com.hoc081098.jetpackcomposelocalization"
@@ -35,7 +44,7 @@ android {
       "!composepreference.preference.generated.resources",
     )
     generateLocaleConfig = true
-    localeFilters += SUPPORTED_LOCALES
+    localeFilters += Locales.supportedLocales
   }
 
   buildTypes {
@@ -43,7 +52,7 @@ android {
       buildConfigField(
         type = "String",
         name = "SUPPORTED_LANGUAGE_CODES",
-        value = SUPPORTED_LANGUAGE_CODES,
+        value = Locales.supportedLanguageCodes,
       )
     }
 
@@ -54,7 +63,7 @@ android {
       buildConfigField(
         type = "String",
         name = "SUPPORTED_LANGUAGE_CODES",
-        value = SUPPORTED_LANGUAGE_CODES,
+        value = Locales.supportedLanguageCodes,
       )
     }
   }
