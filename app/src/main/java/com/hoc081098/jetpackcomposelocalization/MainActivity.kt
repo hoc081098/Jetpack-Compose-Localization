@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import java.util.Locale
 
+private const val FOLLOW_SYSTEM = "FOLLOW_SYSTEM"
+
 class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
@@ -63,6 +65,10 @@ private fun MainScreen(modifier: Modifier = Modifier) {
   val supportedLanguages = BuildConfig.SUPPORTED_LANGUAGE_CODES
     .split(",")
     .sorted()
+  
+  // Check if we're following the system locale
+  val applicationLocales = AppCompatDelegate.getApplicationLocales()
+  val isFollowingSystem = applicationLocales.isEmpty
 
   Scaffold(
     modifier = modifier,
@@ -103,8 +109,31 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             .weight(1f),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+          // Follow system option
+          Text(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp)
+              .clip(MaterialTheme.shapes.medium)
+              .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = MaterialTheme.shapes.medium,
+              )
+              .clickable(onClick = { changeLanguage(FOLLOW_SYSTEM) })
+              .padding(16.dp),
+            text = stringResource(R.string.follow_system) + if (isFollowingSystem) " (current language)" else "",
+            style = if (isFollowingSystem) {
+              MaterialTheme.typography.titleLarge.copy(
+                color = MaterialTheme.colorScheme.primary,
+              )
+            } else {
+              MaterialTheme.typography.titleMedium
+            },
+          )
+          
           supportedLanguages.fastForEach { language ->
-            val isCurrent = locale.language == language
+            val isCurrent = !isFollowingSystem && locale.language == language
 
             Text(
               modifier = Modifier
@@ -135,10 +164,15 @@ private fun MainScreen(modifier: Modifier = Modifier) {
 }
 
 private fun changeLanguage(language: String) {
-  val locale = Locale(language)
-    .also { Log.d("MainActivity", ">>> setApplicationLocales: to $it") }
-
-  AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale))
+  if (language == FOLLOW_SYSTEM) {
+    Log.d("MainActivity", ">>> setApplicationLocales: to system default (empty)")
+    // Set empty locale list to follow system
+    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+  } else {
+    val locale = Locale(language)
+      .also { Log.d("MainActivity", ">>> setApplicationLocales: to $it") }
+    AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale))
+  }
 
   Log.d("MainActivity", ">>> getApplicationLocales: ${AppCompatDelegate.getApplicationLocales()}")
 }

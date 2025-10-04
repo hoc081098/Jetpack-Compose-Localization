@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Đa ngôn ngữ</string>
     <string name="current_locale_language_country">Ngôn ngữ hiện tại: %1$s, ngôn ngữ: %2$s, quốc gia: %3$s, thẻ ngôn ngữ: %4$s</string>
+    <string name="follow_system">Theo hệ thống</string>
 </resources>
