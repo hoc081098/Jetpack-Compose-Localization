@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,9 +35,13 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
 import com.hoc081098.jetpackcomposelocalization.ui.locale.currentLocale
+import com.hoc081098.jetpackcomposelocalization.ui.text.DateTimeFormatterCache
 import com.hoc081098.jetpackcomposelocalization.ui.theme.JetpackComposeLocalizationTheme
+import com.hoc081098.jetpackcomposelocalization.ui.time.formatInstant
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.time.Clock
+import java.time.Instant
 import java.util.Locale
 
 
@@ -107,6 +112,7 @@ private fun MainScreen(modifier: Modifier = Modifier) {
               isCurrent = !isFollowingSystem && locale.language == language,
             )
           }
+          DemoDateTimeFormatter(locale = locale)
         }
       }
     }
@@ -160,6 +166,31 @@ private fun Header(locale: Locale, isFollowingSystem: Boolean, modifier: Modifie
       append(if (isFollowingSystem) " (following system)" else "")
     },
     style = MaterialTheme.typography.titleLarge,
+    textAlign = TextAlign.Center,
+  )
+}
+
+@Composable
+private fun DemoDateTimeFormatter(
+  locale: Locale,
+  modifier: Modifier = Modifier,
+  clock: Clock = Clock.systemDefaultZone(),
+) {
+  val now: Instant = remember(clock) { Instant.now(clock) }
+  val timeFormatter = DateTimeFormatterCache.getFormatterFromSkeleton(
+    locale = locale,
+    skeleton = "yMMMddHmss"
+  )
+
+  Text(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp),
+    text = stringResource(
+      R.string.demo_datetime_formatter,
+      timeFormatter.formatInstant(now, clock.zone),
+    ),
+    style = MaterialTheme.typography.bodyLarge,
     textAlign = TextAlign.Center,
   )
 }
