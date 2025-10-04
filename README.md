@@ -29,6 +29,8 @@ This project showcases **best practices** for implementing localization in moder
 
 The app dynamically displays available languages from `BuildConfig` and highlights the currently selected one.
 
+https://github.com/user-attachments/assets/1dfaab2c-747b-4974-a1d9-96c1a57fe52a
+
 ## Quick Start
 
 ```bash
