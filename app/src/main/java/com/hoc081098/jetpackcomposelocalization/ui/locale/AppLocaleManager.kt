@@ -42,11 +42,12 @@ class AppLocaleManager {
   @Composable
   fun rememberAppLocaleState(): AppLocaleState {
     val locale = currentLocale()
+    val isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty
 
-    return remember(locale) {
+    return remember(locale, isFollowingSystem) {
       AppLocaleState(
         currentLocale = locale,
-        isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty,
+        isFollowingSystem = isFollowingSystem,
         supportedLanguages = supportedLanguages,
       )
     }
