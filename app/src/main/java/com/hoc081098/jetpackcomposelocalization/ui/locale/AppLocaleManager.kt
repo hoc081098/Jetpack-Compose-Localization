@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.core.os.LocaleListCompat
 import com.hoc081098.jetpackcomposelocalization.BuildConfig
@@ -15,6 +16,7 @@ data class AppLocaleState(
   val isFollowingSystem: Boolean,
   val supportedLanguages: List<String>,
 ) {
+  @Stable
   fun isCurrentLanguage(language: String): Boolean =
     if (language == AppLocaleManager.FOLLOW_SYSTEM) {
       isFollowingSystem
@@ -23,6 +25,7 @@ data class AppLocaleState(
     }
 }
 
+@Stable
 class AppLocaleManager {
   private val supportedLanguages = buildList {
     add(FOLLOW_SYSTEM)
