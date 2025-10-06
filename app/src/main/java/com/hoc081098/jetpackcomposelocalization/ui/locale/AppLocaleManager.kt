@@ -67,6 +67,7 @@ class AppLocaleManager {
 
   companion object {
     private val LOG_TAG = AppLocaleManager::class.java.simpleName
+
     const val FOLLOW_SYSTEM = "Language#FollowSystem"
   }
 }
