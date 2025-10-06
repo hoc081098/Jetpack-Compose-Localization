@@ -9,20 +9,20 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Descriptors:
- * - `"SKELETON:<skeleton>"` e.g. `"SKELETON:yMd", "SKELETON:jm", "SKELETON:yMMMd"`
- * - `"LOCALIZED:DATE:<FormatStyle>"` e.g. `"LOCALIZED:DATE:SHORT"`
- * - `"LOCALIZED:TIME:<FormatStyle>"` e.g. `"LOCALIZED:TIME:SHORT"`
- * - `"LOCALIZED:DATETIME:<DateStyle>_<TimeStyle>"` e.g. `"LOCALIZED:DATETIME:SHORT_SHORT"`
- * - `"PATTERN:<pattern>"` e.g. `"PATTERN:dd/MM/uuuu"`
+ * Cache key formats used internally:
+ * - For skeleton patterns: `"SKELETON:<pattern>"` such as `"SKELETON:yMd"`, `"SKELETON:jm"`
+ * - For date formatting: `"LOCALIZED:DATE:<style>"` such as `"LOCALIZED:DATE:SHORT"`
+ * - For time formatting: `"LOCALIZED:TIME:<style>"` such as `"LOCALIZED:TIME:MEDIUM"`
+ * - For datetime formatting: `"LOCALIZED:DATETIME:<date_style>_<time_style>"`
+ * - For custom patterns: `"PATTERN:<custom_pattern>"` such as `"PATTERN:yyyy-MM-dd"`
  *
- * Optional flags:
- * - `is24Hour=true/false/null` (null=unspecified)
+ * Additional parameters:
+ * - Hour format preference: `is24Hour=true/false/null` (null means system default)
  *
- * Example key: `"en-US|SKELETON:yMd|true"`
+ * Complete key example: `"en-US|SKELETON:yMd|true"`
  */
 private object Keys {
-  // Key and descriptor constants
+  // Constants for building cache keys
   const val KEY_SEPARATOR = "|"
   const val DESC_SKELETON = "SKELETON:"
   const val DESC_LOCALIZED_DATE = "LOCALIZED:DATE:"
@@ -31,7 +31,7 @@ private object Keys {
   const val DESC_PATTERN = "PATTERN:"
 
   /**
-   * Create a unique cache key from locale + descriptor + optional flags.
+   * Constructs a unique identifier for caching formatters based on locale and formatting options.
    */
   fun buildKey(locale: Locale, descriptor: String, is24Hour: Boolean? = null): String =
     buildString {
@@ -41,28 +41,30 @@ private object Keys {
       append(KEY_SEPARATOR)
       append(is24Hour)
     }
-
 }
 
 /**
- * Global cache of DateTimeFormatter instances.
+ * Thread-safe caching system for DateTimeFormatter instances to optimize performance.
  *
- * - Keys are formed from locale + descriptor (skeleton, localized style, explicit pattern) + optional flags.
- * - DateTimeFormatter is immutable and thread-safe -> safe to cache and reuse.
- * - Call clear() when the effective app locale changes (e.g. AppCompatDelegate.setApplicationLocales).
+ * This cache stores formatters using composite identifiers that combine locale information
+ * with formatting specifications. Since DateTimeFormatter objects are immutable and
+ * thread-safe, they can be safely cached and reused across multiple threads.
+ *
+ * Important: Call clear() when the application's effective locale changes to ensure
+ * cached formatters reflect the new locale settings.
  */
 @AnyThread
 object DateTimeFormatterCache {
   private val cache = ConcurrentHashMap<String, DateTimeFormatter>()
 
   /**
-   * Returns a DateTimeFormatter derived from an ICU skeleton (e.g., "yMd", "jm", "yMMMdjm").
-   * Honors [is24Hour] preference by normalizing skeleton time fields when provided.
+   * Creates a DateTimeFormatter using ICU skeleton pattern notation for flexible date/time formatting.
+   * Automatically adjusts time format symbols based on the 24-hour preference when specified.
    *
-   * @param locale target Locale for formatting.
-   * @param skeleton ICU skeleton describing the fields to include.
-   * @param is24Hour optional 24-hour preference to influence time symbols.
-   * @return an immutable, thread-safe DateTimeFormatter.
+   * @param locale The target locale for localized formatting
+   * @param skeleton ICU skeleton pattern defining which date/time fields to include
+   * @param is24Hour Optional preference for 24-hour time display format
+   * @return Thread-safe DateTimeFormatter instance optimized for the specified parameters
    */
   fun getFormatterFromSkeleton(
     locale: Locale,
@@ -82,11 +84,11 @@ object DateTimeFormatterCache {
   }
 
   /**
-   * Returns a localized date-only formatter for the given style.
+   * Provides a localized formatter specifically for date display using predefined styles.
    *
-   * @param locale target Locale for formatting.
-   * @param dateStyle localized date style (SHORT, MEDIUM, LONG, FULL).
-   * @return a DateTimeFormatter configured for localized date output.
+   * @param locale Target locale for cultural date formatting preferences
+   * @param dateStyle Predefined formatting style (SHORT, MEDIUM, LONG, FULL)
+   * @return DateTimeFormatter configured for date-only output in the specified style
    */
   fun getLocalizedDateFormatter(locale: Locale, dateStyle: FormatStyle): DateTimeFormatter {
     val key = Keys.buildKey(
@@ -100,11 +102,11 @@ object DateTimeFormatterCache {
   }
 
   /**
-   * Returns a localized time-only formatter for the given style.
+   * Provides a localized formatter specifically for time display using predefined styles.
    *
-   * @param locale target Locale for formatting.
-   * @param timeStyle localized time style (SHORT, MEDIUM, LONG, FULL).
-   * @return a DateTimeFormatter configured for localized time output.
+   * @param locale Target locale for cultural time formatting preferences
+   * @param timeStyle Predefined formatting style (SHORT, MEDIUM, LONG, FULL)
+   * @return DateTimeFormatter configured for time-only output in the specified style
    */
   fun getLocalizedTimeFormatter(locale: Locale, timeStyle: FormatStyle): DateTimeFormatter {
     val key = Keys.buildKey(
@@ -118,12 +120,12 @@ object DateTimeFormatterCache {
   }
 
   /**
-   * Returns a localized date-time formatter for the given date and time styles.
+   * Provides a localized formatter for combined date and time display using predefined styles.
    *
-   * @param locale target Locale for formatting.
-   * @param dateStyle localized date style (SHORT, MEDIUM, LONG, FULL).
-   * @param timeStyle localized time style (SHORT, MEDIUM, LONG, FULL).
-   * @return a DateTimeFormatter configured for localized date-time output.
+   * @param locale Target locale for cultural formatting preferences
+   * @param dateStyle Predefined date formatting style (SHORT, MEDIUM, LONG, FULL)
+   * @param timeStyle Predefined time formatting style (SHORT, MEDIUM, LONG, FULL)
+   * @return DateTimeFormatter configured for combined date-time output
    */
   fun getLocalizedDateTimeFormatter(
     locale: Locale,
@@ -141,16 +143,15 @@ object DateTimeFormatterCache {
   }
 
   /**
-   * Returns a formatter from an explicit pattern.
+   * Creates a formatter from a custom date-time pattern string.
    *
-   * Prefer skeletons or localized styles for UI-facing text. Use explicit patterns mainly for
-   * protocol/contract formats (often with Locale.ROOT).
+   * For user-facing content, prefer skeleton-based or localized formatters for better
+   * internationalization. Custom patterns are most suitable for API communications
+   * or technical formats (often used with Locale.ROOT for consistency).
    *
-   * NOTE: Prefer skeletons or localized styles overloads.
-   *
-   * @param locale target Locale for formatting.
-   * @param pattern date-time pattern (java.time format syntax).
-   * @return a DateTimeFormatter for the provided pattern and locale.
+   * @param locale Target locale for formatting context
+   * @param pattern Custom date-time pattern following Java DateTimeFormatter syntax
+   * @return DateTimeFormatter based on the specified pattern and locale
    */
   fun getPatternFormatter(locale: Locale, pattern: String): DateTimeFormatter {
     val key = Keys.buildKey(
@@ -163,20 +164,21 @@ object DateTimeFormatterCache {
   }
 
   // ----------------------
-  // Cache management
+  // Cache maintenance operations
   // ----------------------
 
   /**
-   * Clears the entire formatter cache.
+   * Removes all cached formatter instances.
    *
-   * Call when the effective app locale changes (e.g., after setting application locales).
+   * Execute this when the application's locale configuration changes to ensure
+   * all subsequent formatting operations use the updated locale settings.
    */
   fun clear() = cache.clear()
 
   /**
-   * Removes all cached formatters for the given locale.
+   * Removes cached formatters associated with a specific locale.
    *
-   * @param locale the locale whose cached entries should be removed.
+   * @param locale The locale whose cached formatters should be invalidated
    */
   fun removeLocale(locale: Locale) {
     val tag = locale.toLanguageTag() + Keys.KEY_SEPARATOR
@@ -187,11 +189,14 @@ object DateTimeFormatterCache {
     }
   }
 
+  /**
+   * Adjusts skeleton patterns to enforce specific hour format preferences.
+   */
   private fun normalizeSkeletonFor24hPreference(skeleton: String, is24Hour: Boolean?): String {
-    // If developer asked to enforce 24h or 12h, prefer skeleton letters H/h or use 'j' otherwise.
+    // When hour format is explicitly specified, replace flexible 'j' with appropriate symbol
     if (is24Hour == null) return skeleton
 
-    // Replace 'j' with 'H' for forced 24h; replace 'j' with 'h' for forced 12h if present.
+    // Convert to 24-hour format (H) or 12-hour format (h) based on preference
     return if (is24Hour) {
       skeleton.replace('j', 'H')
     } else {
