@@ -1,0 +1,108 @@
+package com.hoc081098.jetpackcomposelocalization
+
+import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hoc081098.jetpackcomposelocalization.data.NetworkServiceLocator
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+sealed interface DemoAcceptLanguageUiState {
+  data object Idle : DemoAcceptLanguageUiState
+  data object Loading : DemoAcceptLanguageUiState
+  data class Success(val data: Map<String, Any>) : DemoAcceptLanguageUiState
+  data class Error(val message: String?) : DemoAcceptLanguageUiState
+}
+
+class DemoAcceptLanguageViewModel : ViewModel() {
+  private val apiService get() = NetworkServiceLocator.apiService
+
+  private val _uiState = MutableStateFlow<DemoAcceptLanguageUiState>(DemoAcceptLanguageUiState.Idle)
+  val uiState: StateFlow<DemoAcceptLanguageUiState> = _uiState.asStateFlow()
+
+  fun get() {
+    viewModelScope.launch {
+      _uiState.value = DemoAcceptLanguageUiState.Loading
+      try {
+        val response = apiService.getLocalizedData()
+        _uiState.value = DemoAcceptLanguageUiState.Success(response)
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Log.e("DemoAcceptLanguageVM", "Error while fetching data", e)
+        _uiState.value = DemoAcceptLanguageUiState.Error(e.message)
+      }
+    }
+  }
+
+  fun reset() {
+    _uiState.value = DemoAcceptLanguageUiState.Idle
+  }
+}
+
+@Composable
+fun DemoAcceptLanguageHeader(
+  modifier: Modifier = Modifier,
+  viewModel: DemoAcceptLanguageViewModel = viewModel(),
+) {
+  val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+  Column(
+    modifier = modifier.padding(16.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Button(onClick = { viewModel.get() }) { Text("GET") }
+      OutlinedButton(onClick = { viewModel.reset() }) { Text("Reset") }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    when (val s = state) {
+      DemoAcceptLanguageUiState.Idle ->
+        Text("Press GET to call httpbin.org/get")
+
+      DemoAcceptLanguageUiState.Loading ->
+        Row {
+          CircularProgressIndicator()
+          Spacer(Modifier.width(8.dp))
+          Text("Loading…")
+        }
+
+      is DemoAcceptLanguageUiState.Success -> {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+          Text("Response success", style = MaterialTheme.typography.titleSmall)
+          Text("Response: ${s.data}")
+        }
+      }
+
+      is DemoAcceptLanguageUiState.Error ->
+        Text(
+          text = "Error: ${s.message ?: "unknown"}",
+          color = MaterialTheme.colorScheme.error,
+        )
+    }
+  }
+}

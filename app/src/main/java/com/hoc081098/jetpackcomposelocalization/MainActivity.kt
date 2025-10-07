@@ -103,6 +103,7 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             )
           }
           DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
+          DemoAcceptLanguageHeader()
         }
       }
     }
