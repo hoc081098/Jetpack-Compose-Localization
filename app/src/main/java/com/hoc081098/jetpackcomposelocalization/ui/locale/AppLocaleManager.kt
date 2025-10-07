@@ -42,6 +42,8 @@ class AppLocaleManager {
   @Composable
   fun rememberAppLocaleState(): AppLocaleState {
     val locale = currentLocale()
+
+    // Set empty locale list to follow system
     val isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty
 
     return remember(locale, isFollowingSystem) {
@@ -72,3 +74,10 @@ class AppLocaleManager {
     const val FOLLOW_SYSTEM = "Language#FollowSystem"
   }
 }
+
+val Locale.localizedDisplayName: String
+  inline get() = getDisplayName(this)
+    .replaceFirstChar {
+      if (it.isLowerCase()) it.titlecase(this)
+      else it.toString()
+    }

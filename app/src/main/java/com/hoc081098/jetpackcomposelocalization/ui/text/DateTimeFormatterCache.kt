@@ -153,6 +153,7 @@ object DateTimeFormatterCache {
    * @param pattern Custom date-time pattern following Java DateTimeFormatter syntax
    * @return DateTimeFormatter based on the specified pattern and locale
    */
+  @Deprecated("Localization: prefer skeletons or localized styles for UI")
   fun getPatternFormatter(locale: Locale, pattern: String): DateTimeFormatter {
     val key = Keys.buildKey(
       locale = locale,

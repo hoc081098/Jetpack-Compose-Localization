@@ -33,6 +33,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
 import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleManager
+import com.hoc081098.jetpackcomposelocalization.ui.locale.localizedDisplayName
 import com.hoc081098.jetpackcomposelocalization.ui.text.DateTimeFormatterCache
 import com.hoc081098.jetpackcomposelocalization.ui.theme.JetpackComposeLocalizationTheme
 import com.hoc081098.jetpackcomposelocalization.ui.time.formatInstant
@@ -116,6 +117,7 @@ private fun LanguageOption(
   changeLanguage: (language: String) -> Unit,
   modifier: Modifier = Modifier
 ) {
+
   Text(
     modifier = modifier
       .fillMaxWidth()
@@ -129,7 +131,10 @@ private fun LanguageOption(
       .clickable(onClick = { changeLanguage(language) })
       .padding(16.dp),
     text = buildString {
-      append(if (language == AppLocaleManager.FOLLOW_SYSTEM) stringResource(R.string.follow_system) else language)
+      append(
+        if (language == AppLocaleManager.FOLLOW_SYSTEM) stringResource(R.string.follow_system)
+        else remember(language) { Locale(language).localizedDisplayName }
+      )
       append(if (isCurrent) " (current language)" else "")
     },
     style = if (isCurrent) {
