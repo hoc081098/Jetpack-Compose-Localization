@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +30,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
-import com.hoc081098.jetpackcomposelocalization.ui.locale.currentLocale
+import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleManager
+import com.hoc081098.jetpackcomposelocalization.ui.locale.localizedDisplayName
 import com.hoc081098.jetpackcomposelocalization.ui.text.DateTimeFormatterCache
 import com.hoc081098.jetpackcomposelocalization.ui.theme.JetpackComposeLocalizationTheme
 import com.hoc081098.jetpackcomposelocalization.ui.time.formatInstant
@@ -62,19 +61,11 @@ class MainActivity : AppCompatActivity() {
   }
 }
 
-private const val FOLLOW_SYSTEM = "Language#FollowSystem"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreen(modifier: Modifier = Modifier) {
-  val locale = currentLocale()
-
-  // Check if we're following the system locale
-  val isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty
-
-  val supportedLanguages = BuildConfig.SUPPORTED_LANGUAGE_CODES
-    .split(",")
-    .sorted()
+  val appLocaleManager = remember { AppLocaleManager() }
+  val appLocaleState = appLocaleManager.rememberAppLocaleState()
 
   Scaffold(
     modifier = modifier,
@@ -92,7 +83,10 @@ private fun MainScreen(modifier: Modifier = Modifier) {
       contentAlignment = Alignment.Center,
     ) {
       Column(modifier = Modifier.fillMaxSize()) {
-        Header(locale = locale, isFollowingSystem = isFollowingSystem)
+        Header(
+          locale = appLocaleState.currentLocale,
+          isFollowingSystem = appLocaleState.isFollowingSystem
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -102,17 +96,14 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             .weight(1f),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-          LanguageOption(
-            language = FOLLOW_SYSTEM,
-            isCurrent = isFollowingSystem,
-          )
-          supportedLanguages.fastForEach { language ->
+          appLocaleState.supportedLanguages.fastForEach { language ->
             LanguageOption(
               language = language,
-              isCurrent = !isFollowingSystem && locale.language == language,
+              isCurrent = appLocaleState.isCurrentLanguage(language),
+              changeLanguage = appLocaleManager::changeLanguage,
             )
           }
-          DemoDateTimeFormatter(locale = locale)
+          DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
         }
       }
     }
@@ -120,7 +111,13 @@ private fun MainScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LanguageOption(language: String, isCurrent: Boolean, modifier: Modifier = Modifier) {
+private fun LanguageOption(
+  language: String,
+  isCurrent: Boolean,
+  changeLanguage: (language: String) -> Unit,
+  modifier: Modifier = Modifier
+) {
+
   Text(
     modifier = modifier
       .fillMaxWidth()
@@ -134,7 +131,10 @@ private fun LanguageOption(language: String, isCurrent: Boolean, modifier: Modif
       .clickable(onClick = { changeLanguage(language) })
       .padding(16.dp),
     text = buildString {
-      append(if (language == FOLLOW_SYSTEM) stringResource(R.string.follow_system) else language)
+      append(
+        if (language == AppLocaleManager.FOLLOW_SYSTEM) stringResource(R.string.follow_system)
+        else remember(language) { Locale(language).localizedDisplayName }
+      )
       append(if (isCurrent) " (current language)" else "")
     },
     style = if (isCurrent) {
@@ -193,20 +193,4 @@ private fun DemoDateTimeFormatter(
     style = MaterialTheme.typography.bodyLarge,
     textAlign = TextAlign.Center,
   )
-}
-
-private fun changeLanguage(language: String) {
-  if (language == FOLLOW_SYSTEM) {
-    Log.d("MainActivity", ">>> setApplicationLocales: to system default (empty)")
-
-    // Set empty locale list to follow system
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
-  } else {
-    val locale = Locale(language)
-      .also { Log.d("MainActivity", ">>> setApplicationLocales: to $it") }
-
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale))
-  }
-
-  Log.d("MainActivity", ">>> getApplicationLocales: ${AppCompatDelegate.getApplicationLocales()}")
 }
