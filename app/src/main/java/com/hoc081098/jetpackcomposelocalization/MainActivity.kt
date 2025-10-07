@@ -43,7 +43,6 @@ import java.time.Clock
 import java.time.Instant
 import java.util.Locale
 
-
 class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
@@ -117,7 +116,6 @@ private fun LanguageOption(
   changeLanguage: (language: String) -> Unit,
   modifier: Modifier = Modifier
 ) {
-
   Text(
     modifier = modifier
       .fillMaxWidth()
