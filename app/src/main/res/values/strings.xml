@@ -3,4 +3,12 @@
     <string name="current_locale_language_country">Current locale: %1$s, language: %2$s, country: %3$s, languageTag: %4$s</string>
     <string name="follow_system">Follow system</string>
     <string name="demo_datetime_formatter">It is now %1$s</string>
+    <string name="demo_accept_language_get_button">GET</string>
+    <string name="demo_accept_language_reset_button">Reset</string>
+    <string name="demo_accept_language_prompt">Press GET to call httpbin.org/get</string>
+    <string name="demo_accept_language_loading">Loading…</string>
+    <string name="demo_accept_language_response_title">Response success</string>
+    <string name="demo_accept_language_response">Response: %1$s</string>
+    <string name="demo_accept_language_error">Error: %1$s</string>
+    <string name="demo_accept_language_error_unknown">unknown</string>
 </resources>
