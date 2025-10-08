@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "commitBodyTable": true,
+  "semanticCommits": "enabled",
+  "labels": [
+    "dependencies"
+  ],
+  "assignees": [
+    "hoc081098"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "*"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "groupName": "all dependencies",
+      "groupSlug": "all-deps"
+    }
+  ]
+}
