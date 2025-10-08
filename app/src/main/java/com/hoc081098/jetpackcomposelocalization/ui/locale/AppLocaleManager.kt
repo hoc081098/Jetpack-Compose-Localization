@@ -61,6 +61,24 @@ class AppLocaleManager {
     )
   }
 
+  /**
+   * Recomposition trigger tied to application locales.
+   *
+   * Why this exists:
+   * - Calling [AppCompatDelegate.setApplicationLocales] may be a no-op (e.g., target equals current)
+   *   or its effects may not be observable immediately via [currentLocale]/[AppCompatDelegate.getApplicationLocales].
+   * - When that happens, Compose wouldn't naturally recompose, so the UI wouldn't reflect a (potential)
+   *   locale change.
+   *
+   * How it works:
+   * - We read this state in [rememberAppLocaleState] to create a dependency.
+   * - After any [changeLanguage] call, we write to this state using [neverEqualPolicy], which
+   *   always invalidates and forces recomposition regardless of the written value.
+   *
+   * Notes:
+   * - This is not a source of truth for the locale; it's just an invalidation signal.
+   * - Actual locale data still comes from [currentLocale].
+   */
   private val applicationLocalesSignalState = mutableStateOf(
     value = Unit,
     policy = neverEqualPolicy()
