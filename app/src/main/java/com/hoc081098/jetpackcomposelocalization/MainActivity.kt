@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +95,8 @@ private fun MainScreen(modifier: Modifier = Modifier) {
         Column(
           modifier = Modifier
             .fillMaxWidth()
-            .weight(1f),
+            .weight(1f)
+            .verticalScroll(rememberScrollState()),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
           appLocaleState.supportedLocales.fastForEach { locale ->
@@ -104,6 +107,7 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             )
           }
           DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
+          Spacer(modifier = Modifier.height(8.dp))
           DemoAcceptLanguageHeader()
         }
       }

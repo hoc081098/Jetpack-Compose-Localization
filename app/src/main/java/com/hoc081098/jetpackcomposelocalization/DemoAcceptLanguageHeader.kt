@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,14 +32,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface DemoAcceptLanguageUiState {
+@Immutable
+internal sealed interface DemoAcceptLanguageUiState {
   data object Idle : DemoAcceptLanguageUiState
   data object Loading : DemoAcceptLanguageUiState
   data class Success(val data: Map<String, Any>) : DemoAcceptLanguageUiState
   data class Error(val message: String?) : DemoAcceptLanguageUiState
 }
 
-class DemoAcceptLanguageViewModel : ViewModel() {
+internal class DemoAcceptLanguageViewModel : ViewModel() {
   private val apiService get() = NetworkServiceLocator.apiService
 
   private val _uiState = MutableStateFlow<DemoAcceptLanguageUiState>(DemoAcceptLanguageUiState.Idle)
@@ -69,7 +71,7 @@ class DemoAcceptLanguageViewModel : ViewModel() {
 }
 
 @Composable
-fun DemoAcceptLanguageHeader(
+internal fun DemoAcceptLanguageHeader(
   modifier: Modifier = Modifier,
   viewModel: DemoAcceptLanguageViewModel = viewModel(),
 ) {
@@ -90,9 +92,9 @@ fun DemoAcceptLanguageHeader(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    when (val s = state) {
+    when (val currentState = state) {
       DemoAcceptLanguageUiState.Idle ->
-        Text("Press GET to call httpbin.org/get")
+        Text(text = "Press GET to call httpbin.org/get")
 
       DemoAcceptLanguageUiState.Loading ->
         Row(
@@ -101,8 +103,8 @@ fun DemoAcceptLanguageHeader(
           verticalAlignment = Alignment.CenterVertically,
         ) {
           CircularProgressIndicator()
-          Spacer(Modifier.width(8.dp))
-          Text("Loading…")
+          Spacer(modifier = Modifier.width(8.dp))
+          Text(text = "Loading…")
         }
 
       is DemoAcceptLanguageUiState.Success -> {
@@ -111,14 +113,14 @@ fun DemoAcceptLanguageHeader(
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-          Text("Response success", style = MaterialTheme.typography.titleSmall)
-          Text("Response: ${s.data}")
+          Text(text = "Response success", style = MaterialTheme.typography.titleSmall)
+          Text(text = "Response: ${currentState.data}")
         }
       }
 
       is DemoAcceptLanguageUiState.Error ->
         Text(
-          text = "Error: ${s.message ?: "unknown"}",
+          text = "Error: ${currentState.message ?: "unknown"}",
           color = MaterialTheme.colorScheme.error,
         )
     }

@@ -2,7 +2,6 @@ package com.hoc081098.jetpackcomposelocalization.data
 
 import android.app.Application
 import androidx.core.app.LocaleManagerCompat
-import androidx.core.os.LocaleListCompat
 import com.hoc081098.jetpackcomposelocalization.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -34,14 +33,15 @@ object NetworkServiceLocator {
 
   private val localeProvider: AcceptedLanguageInterceptor.LocaleProvider
     get() = AcceptedLanguageInterceptor.LocaleProvider {
-      LocaleManagerCompat.getApplicationLocales(application)[0]
-        ?: LocaleListCompat.getAdjustedDefault()[0]!!
+      LocaleManagerCompat.getApplicationLocales(application)
+        .takeIf { it.size() > 0 }
+        ?: LocaleManagerCompat.getSystemLocales(application)
     }
 
   private val acceptedLanguageInterceptor: AcceptedLanguageInterceptor
     get() = AcceptedLanguageInterceptor(localeProvider)
 
-  val okHttpClient: OkHttpClient by lazy {
+  private val okHttpClient: OkHttpClient by lazy {
     OkHttpClient.Builder()
       .readTimeout(30, TimeUnit.SECONDS)
       .writeTimeout(30, TimeUnit.SECONDS)
@@ -59,7 +59,7 @@ object NetworkServiceLocator {
       .build()
   }
 
-  val retrofit: Retrofit by lazy {
+  private val retrofit: Retrofit by lazy {
     Retrofit.Builder()
       .baseUrl(BASE_URL)
       .client(okHttpClient)
