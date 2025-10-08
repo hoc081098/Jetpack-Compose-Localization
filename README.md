@@ -21,11 +21,12 @@ This project showcases **best practices** for implementing localization in moder
 - **🔀 Follow System Option**: Seamlessly follow device locale settings
 - **🎯 Per-App Language Settings**: Uses AndroidX AppCompat's `setApplicationLocales()` API (API 27+)
 - **📊 Live Locale Information**: Real-time display of current locale details
+- **🌐 Accept-Language Header Demo**: HTTP request demonstration with automatic locale-aware Accept-Language headers
 
 ## Supported Languages
 
-- **English** (en, en-US)
-- **Vietnamese** (vi, vi-VN)
+- **English** (en)
+- **Vietnamese** (vi-VN)
 
 The app dynamically displays available languages from `BuildConfig` and highlights the currently selected one.
 
@@ -56,6 +57,9 @@ Run the app and tap on a language to see instant language switching with locale-
 - **AndroidX AppCompat** - Per-app language preferences API
 - **AndroidX Lifecycle** - Lifecycle-aware components
 - **Java Time API** - Modern date/time handling with ICU patterns
+- **Retrofit** - Type-safe HTTP client for network requests
+- **Moshi** - Modern JSON library for Kotlin
+- **OkHttp** - HTTP client with interceptor support
 
 ## Project Structure
 
@@ -63,21 +67,28 @@ Run the app and tap on a language to see instant language switching with locale-
 app/src/main/
 ├── java/com/hoc081098/jetpackcomposelocalization/
 │   ├── MainActivity.kt                          # Main activity with language switching
+│   ├── DemoAcceptLanguageHeader.kt              # Accept-Language header demo
+│   ├── MyApplication.kt                         # Application class for initialization
+│   ├── data/
+│   │   ├── AcceptedLanguageInterceptor.kt       # OkHttp interceptor for Accept-Language
+│   │   ├── ApiService.kt                        # Retrofit API interface
+│   │   └── NetworkServiceLocator.kt             # Network service configuration
 │   └── ui/
 │       ├── locale/
-│       │   └── currentLocale.kt                # Composable to get current locale
+│       │   ├── AppLocaleManager.kt              # Locale management and state
+│       │   └── currentLocale.kt                 # Composable to get current locale
 │       ├── text/
-│       │   └── DateTimeFormatterCache.kt       # 🔥 Intelligent formatter caching
+│       │   └── DateTimeFormatterCache.kt        # 🔥 Intelligent formatter caching
 │       ├── time/
-│       │   └── Instant.kt                      # Extension functions for time formatting
+│       │   └── Instant.kt                       # Extension functions for time formatting
 │       └── theme/
-│           ├── Color.kt                        # Color definitions
-│           ├── Theme.kt                        # Material Theme configuration
-│           └── Type.kt                         # Typography definitions
+│           ├── Color.kt                         # Color definitions
+│           ├── Theme.kt                         # Material Theme configuration
+│           └── Type.kt                          # Typography definitions
 └── res/
-    ├── values/                                 # Default resources (English)
+    ├── values/                                  # Default resources (English)
     │   └── strings.xml
-    └── values-vi/                              # Vietnamese resources
+    └── values-vi/                               # Vietnamese resources
         └── strings.xml
 ```
 
@@ -107,16 +118,21 @@ cd Jetpack-Compose-Localization
 
 ### Language Switching
 
-The app uses AndroidX AppCompat's per-app language preferences API with support for "Follow System" mode:
+The app uses `AppLocaleManager` with AndroidX AppCompat's per-app language preferences API with support for "Follow System" mode:
 
 ```kotlin
-private fun changeLanguage(language: String) {
-  if (language == FOLLOW_SYSTEM) {
-    // Set empty locale list to follow system
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
-  } else {
-    val locale = Locale(language)
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale))
+@Stable
+class AppLocaleManager {
+  fun changeLanguage(locale: AppLocaleState.AppLocale) {
+    val target = when (locale) {
+      AppLocaleState.AppLocale.FollowSystem ->
+        // Set empty locale list to follow system
+        LocaleListCompat.getEmptyLocaleList()
+
+      is AppLocaleState.AppLocale.Language ->
+        LocaleListCompat.create(locale.locale)
+    }
+    AppCompatDelegate.setApplicationLocales(target)
   }
 }
 ```
@@ -219,15 +235,27 @@ val zonedDateTime = instant.toZonedDateTime(ZoneId.systemDefault())
 The build configuration defines supported locales:
 
 ```kotlin
-val SUPPORTED_LOCALES = setOf(
-  "en",
-  "en-rUS",
-  "vi",
-  "vi-rVN",
-)
+object Locales {
+  val localeFilters = listOf(
+    "en",
+    "vi-rVN",
+  )
+
+  val supportedLocales: String =
+    localeFilters.joinToString(
+      separator = ",",
+      prefix = "\"",
+      postfix = "\""
+    ) {
+      it.replace(
+        oldValue = "-r",
+        newValue = "-"
+      )
+    }
+}
 ```
 
-These are automatically filtered during the build process and available via `BuildConfig.SUPPORTED_LANGUAGE_CODES`.
+These are automatically exposed via `BuildConfig.SUPPORTED_LOCALES` (comma-separated string: `"en,vi-VN"`).
 
 ## Advanced Features
 
@@ -265,11 +293,78 @@ The app provides a "Follow System" option that:
 Supported locales are automatically exposed via BuildConfig:
 
 ```kotlin
-val SUPPORTED_LOCALES = setOf("en", "en-rUS", "vi", "vi-rVN")
-// Available at runtime as: BuildConfig.SUPPORTED_LANGUAGE_CODES
+object Locales {
+  val localeFilters = listOf("en", "vi-rVN")
+  val supportedLocales: String = localeFilters.joinToString(",", "\"", "\"") { 
+    it.replace("-r", "-") 
+  }
+}
+// Available at runtime as: BuildConfig.SUPPORTED_LOCALES = "en,vi-VN"
 ```
 
-This enables dynamic UI generation without hardcoding language options.
+The `AppLocaleManager` parses this string to dynamically generate language options without hardcoding.
+
+### Accept-Language Header Demo
+
+The app includes a practical demonstration of sending locale-aware HTTP requests with the Accept-Language header:
+
+**Key Components:**
+
+1. **AcceptedLanguageInterceptor** - OkHttp interceptor that automatically adds Accept-Language header:
+```kotlin
+internal class AcceptedLanguageInterceptor(
+  private val localeProvider: LocaleProvider,
+) : Interceptor {
+  override fun intercept(chain: Interceptor.Chain): Response {
+    val locales = localeProvider.provide()
+    val request = chain.request()
+      .newBuilder()
+      .addHeader("Accept-Language", locales.toLanguageTags())
+      .build()
+    return chain.proceed(request)
+  }
+}
+```
+
+2. **NetworkServiceLocator** - Configures OkHttp with the interceptor:
+```kotlin
+object NetworkServiceLocator {
+  private val localeProvider: AcceptedLanguageInterceptor.LocaleProvider
+    get() = AcceptedLanguageInterceptor.LocaleProvider {
+      LocaleManagerCompat.getApplicationLocales(application)
+        .takeIf { it.size() > 0 }
+        ?: LocaleManagerCompat.getSystemLocales(application)
+    }
+
+  private val okHttpClient: OkHttpClient by lazy {
+    OkHttpClient.Builder()
+      .addInterceptor(AcceptedLanguageInterceptor(localeProvider))
+      .build()
+  }
+}
+```
+
+3. **DemoAcceptLanguageHeader** - Composable UI that calls httpbin.org/get:
+   - Press "GET" to make a request to httpbin.org
+   - The server echoes back the Accept-Language header
+   - Shows how different locales result in different Accept-Language values
+   - Example: English → `"en"`, Vietnamese → `"vi-VN"`
+
+4. **MyApplication** - Initializes the network service locator:
+```kotlin
+class MyApplication : Application() {
+  override fun onCreate() {
+    super.onCreate()
+    NetworkServiceLocator.init(this)
+  }
+}
+```
+
+**Why this matters:**
+- Demonstrates real-world usage of locale information in API calls
+- Shows proper architecture for locale-aware networking
+- Useful pattern for apps that need server-side localization
+- The Accept-Language header helps servers return content in the user's preferred language
 
 ## Adding New Languages
 
@@ -277,11 +372,14 @@ Adding a new language is straightforward:
 
 **1. Update build configuration** (`app/build.gradle.kts`):
 ```kotlin
-val SUPPORTED_LOCALES = setOf(
-  "en", "en-rUS",
-  "vi", "vi-rVN",
-  "fr", "fr-rFR",  // ← Add new locale
-)
+object Locales {
+  val localeFilters = listOf(
+    "en",
+    "vi-rVN",
+    "fr-rFR",  // ← Add new locale
+  )
+  // ...
+}
 ```
 
 **2. Create resource directory** `app/src/main/res/values-{lang}/`
