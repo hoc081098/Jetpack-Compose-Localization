@@ -16,12 +16,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +37,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
 import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleManager
+import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleState
 import com.hoc081098.jetpackcomposelocalization.ui.locale.localizedDisplayName
 import com.hoc081098.jetpackcomposelocalization.ui.text.DateTimeFormatterCache
 import com.hoc081098.jetpackcomposelocalization.ui.theme.JetpackComposeLocalizationTheme
@@ -66,6 +71,10 @@ private fun MainScreen(modifier: Modifier = Modifier) {
   val appLocaleManager = remember { AppLocaleManager() }
   val appLocaleState = appLocaleManager.rememberAppLocaleState()
 
+  SideEffect {
+    Log.d("MainScreen", ">>> MainScreen recomposed with: $appLocaleState")
+  }
+
   Scaffold(
     modifier = modifier,
     topBar = {
@@ -92,17 +101,22 @@ private fun MainScreen(modifier: Modifier = Modifier) {
         Column(
           modifier = Modifier
             .fillMaxWidth()
-            .weight(1f),
+            .weight(1f)
+            .verticalScroll(rememberScrollState()),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-          appLocaleState.supportedLanguages.fastForEach { language ->
-            LanguageOption(
-              language = language,
-              isCurrent = appLocaleState.isCurrentLanguage(language),
-              changeLanguage = appLocaleManager::changeLanguage,
-            )
+          appLocaleState.supportedLocales.fastForEach { locale ->
+            key(locale) {
+              LanguageOption(
+                locale = locale,
+                isCurrent = appLocaleState.isCurrentLanguage(locale),
+                changeLanguage = { appLocaleManager.changeLanguage(locale) },
+              )
+            }
           }
           DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
+          Spacer(modifier = Modifier.height(8.dp))
+          DemoAcceptLanguageHeader()
         }
       }
     }
@@ -111,9 +125,9 @@ private fun MainScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun LanguageOption(
-  language: String,
+  locale: AppLocaleState.AppLocale,
   isCurrent: Boolean,
-  changeLanguage: (language: String) -> Unit,
+  changeLanguage: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Text(
@@ -126,13 +140,10 @@ private fun LanguageOption(
         color = MaterialTheme.colorScheme.outline,
         shape = MaterialTheme.shapes.medium,
       )
-      .clickable(onClick = { changeLanguage(language) })
+      .clickable(onClick = changeLanguage)
       .padding(16.dp),
     text = buildString {
-      append(
-        if (language == AppLocaleManager.FOLLOW_SYSTEM) stringResource(R.string.follow_system)
-        else remember(language) { Locale(language).localizedDisplayName }
-      )
+      append(locale.localizedDisplayName())
       append(if (isCurrent) " (current language)" else "")
     },
     style = if (isCurrent) {
