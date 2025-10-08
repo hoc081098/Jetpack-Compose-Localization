@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -15,6 +16,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -71,6 +73,7 @@ fun DemoAcceptLanguageHeader(
   Column(
     modifier = modifier.padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
   ) {
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -85,14 +88,21 @@ fun DemoAcceptLanguageHeader(
         Text("Press GET to call httpbin.org/get")
 
       DemoAcceptLanguageUiState.Loading ->
-        Row {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.Center,
+        ) {
           CircularProgressIndicator()
           Spacer(Modifier.width(8.dp))
           Text("Loading…")
         }
 
       is DemoAcceptLanguageUiState.Success -> {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
           Text("Response success", style = MaterialTheme.typography.titleSmall)
           Text("Response: ${s.data}")
         }
