@@ -4,4 +4,12 @@
     <string name="current_locale_language_country">Ngôn ngữ hiện tại: %1$s, ngôn ngữ: %2$s, quốc gia: %3$s, thẻ ngôn ngữ: %4$s</string>
     <string name="follow_system">Theo hệ thống</string>
     <string name="demo_datetime_formatter">Bây giờ là %1$s</string>
+    <string name="demo_accept_language_get_button">Gọi GET</string>
+    <string name="demo_accept_language_reset_button">Đặt lại</string>
+    <string name="demo_accept_language_prompt">Nhấn GET để gọi httpbin.org/get</string>
+    <string name="demo_accept_language_loading">Đang tải…</string>
+    <string name="demo_accept_language_response_title">Phản hồi thành công</string>
+    <string name="demo_accept_language_response">Phản hồi: %1$s</string>
+    <string name="demo_accept_language_error">Lỗi: %1$s</string>
+    <string name="demo_accept_language_error_unknown">không rõ</string>
 </resources>
