@@ -131,12 +131,7 @@ private fun LanguageOption(
       .clickable(onClick = changeLanguage)
       .padding(16.dp),
     text = buildString {
-      append(
-        when (locale) {
-          AppLocaleState.AppLocale.FollowSystem -> stringResource(R.string.follow_system)
-          is AppLocaleState.AppLocale.Language -> remember(locale) { locale.locale.localizedDisplayName }
-        }
-      )
+      append(locale.localizedDisplayName())
       append(if (isCurrent) " (current language)" else "")
     },
     style = if (isCurrent) {
