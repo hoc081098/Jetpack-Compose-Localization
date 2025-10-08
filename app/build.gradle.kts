@@ -94,7 +94,7 @@ dependencies {
   implementation(libs.androidx.activity.compose)
   implementation(platform(libs.androidx.compose.bom))
   // compose lifecycle viewmodel
-  implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+  implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
@@ -109,18 +109,15 @@ dependencies {
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
   // Retrofit
-  val retrofitVersion = "2.11.0"
-  implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
-  implementation("com.squareup.retrofit2:converter-moshi:$retrofitVersion")
+  implementation(libs.retrofit)
+  implementation(libs.retrofit.converter.moshi)
 
   // Moshi
-  val moshiVersion = "1.15.1"
-  implementation("com.squareup.moshi:moshi:$moshiVersion")
-  implementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
+  implementation(libs.moshi)
+  implementation(libs.moshi.kotlin)
 
-  // define a BOM and its version
-  implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
-  // define any required OkHttp artifacts without version
-  implementation("com.squareup.okhttp3:okhttp")
-  implementation("com.squareup.okhttp3:logging-interceptor")
+  // OkHttp BOM and artifacts
+  implementation(platform(libs.okhttp.bom))
+  implementation(libs.okhttp)
+  implementation(libs.okhttp.logging.interceptor)
 }
