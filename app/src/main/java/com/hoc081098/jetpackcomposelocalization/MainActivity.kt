@@ -24,6 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +71,10 @@ private fun MainScreen(modifier: Modifier = Modifier) {
   val appLocaleManager = remember { AppLocaleManager() }
   val appLocaleState = appLocaleManager.rememberAppLocaleState()
 
+  SideEffect {
+    Log.d("MainScreen", ">>> MainScreen recomposed with: $appLocaleState")
+  }
+
   Scaffold(
     modifier = modifier,
     topBar = {
@@ -100,11 +106,13 @@ private fun MainScreen(modifier: Modifier = Modifier) {
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
           appLocaleState.supportedLocales.fastForEach { locale ->
-            LanguageOption(
-              locale = locale,
-              isCurrent = appLocaleState.isCurrent(locale),
-              changeLanguage = { appLocaleManager.changeLanguage(locale) },
-            )
+            key(locale) {
+              LanguageOption(
+                locale = locale,
+                isCurrent = appLocaleState.isCurrentLanguage(locale),
+                changeLanguage = { appLocaleManager.changeLanguage(locale) },
+              )
+            }
           }
           DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
           Spacer(modifier = Modifier.height(8.dp))

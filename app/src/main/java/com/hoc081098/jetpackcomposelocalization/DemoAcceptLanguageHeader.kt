@@ -1,6 +1,7 @@
 package com.hoc081098.jetpackcomposelocalization
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,6 +81,7 @@ internal fun DemoAcceptLanguageHeader(
   Column(
     modifier = modifier
       .fillMaxWidth()
+      .background(MaterialTheme.colorScheme.secondaryContainer)
       .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,

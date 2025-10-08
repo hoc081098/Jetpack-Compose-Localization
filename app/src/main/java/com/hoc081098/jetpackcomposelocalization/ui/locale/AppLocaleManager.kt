@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
@@ -24,14 +26,17 @@ data class AppLocaleState(
   sealed interface AppLocale {
     data object FollowSystem : AppLocale
 
-    data class Language(val locale: Locale) : AppLocale
+    data class Language(val locale: Locale) : AppLocale {
+      fun isTheSameLanguage(other: Locale): Boolean =
+        locale.language == other.language
+    }
   }
 
   @Stable
-  fun isCurrent(locale: AppLocale): Boolean =
+  fun isCurrentLanguage(locale: AppLocale): Boolean =
     when (locale) {
       AppLocale.FollowSystem -> isFollowingSystem
-      is AppLocale.Language -> !isFollowingSystem && currentLocale == locale.locale
+      is AppLocale.Language -> !isFollowingSystem && locale.isTheSameLanguage(currentLocale)
     }
 }
 
@@ -45,9 +50,21 @@ class AppLocaleManager {
         .split(',')
         .sorted()
         .distinct()
-        .map { AppLocaleState.AppLocale.Language(locale = Locale.forLanguageTag(it)) }
+        .map {
+          AppLocaleState.AppLocale.Language(
+            locale = Locale
+              .forLanguageTag(it)
+              .stripExtensions()
+          )
+        }
+        .distinctBy { it.locale.language }
     )
   }
+
+  private val applicationLocalesSignalState = mutableStateOf(
+    value = Unit,
+    policy = neverEqualPolicy()
+  )
 
   @Composable
   fun rememberAppLocaleState(): AppLocaleState {
@@ -55,7 +72,7 @@ class AppLocaleManager {
 
     val locale = currentLocale()
 
-    // Set empty locale list to follow system
+    applicationLocalesSignalState.value // <-- value read to getApplicationLocales if needed
     val isFollowingSystem = AppCompatDelegate.getApplicationLocales().isEmpty
 
     return remember(locale, isFollowingSystem) {
@@ -79,6 +96,7 @@ class AppLocaleManager {
         LocaleListCompat.create(locale.locale)
     }
     AppCompatDelegate.setApplicationLocales(target)
+    applicationLocalesSignalState.value = Unit // <-- trigger recomposition
 
     Log.d(LOG_TAG, ">>> getApplicationLocales: ${AppCompatDelegate.getApplicationLocales()}")
   }
