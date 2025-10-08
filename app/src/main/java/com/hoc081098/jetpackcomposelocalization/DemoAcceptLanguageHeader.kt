@@ -25,6 +25,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hoc081098.jetpackcomposelocalization.data.NetworkServiceLocator
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,8 +44,11 @@ class DemoAcceptLanguageViewModel : ViewModel() {
   private val _uiState = MutableStateFlow<DemoAcceptLanguageUiState>(DemoAcceptLanguageUiState.Idle)
   val uiState: StateFlow<DemoAcceptLanguageUiState> = _uiState.asStateFlow()
 
+  private var job: Job? = null
+
   fun get() {
-    viewModelScope.launch {
+    job?.cancel()
+    job = viewModelScope.launch {
       _uiState.value = DemoAcceptLanguageUiState.Loading
       try {
         val response = apiService.getLocalizedData()
@@ -59,6 +63,7 @@ class DemoAcceptLanguageViewModel : ViewModel() {
   }
 
   fun reset() {
+    job?.cancel()
     _uiState.value = DemoAcceptLanguageUiState.Idle
   }
 }
@@ -71,14 +76,16 @@ fun DemoAcceptLanguageHeader(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
 
   Column(
-    modifier = modifier.padding(16.dp),
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      Button(onClick = { viewModel.get() }) { Text("GET") }
-      OutlinedButton(onClick = { viewModel.reset() }) { Text("Reset") }
+      Button(onClick = viewModel::get) { Text("GET") }
+      OutlinedButton(onClick = viewModel::reset) { Text("Reset") }
     }
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -91,6 +98,7 @@ fun DemoAcceptLanguageHeader(
         Row(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.Center,
+          verticalAlignment = Alignment.CenterVertically,
         ) {
           CircularProgressIndicator()
           Spacer(Modifier.width(8.dp))
