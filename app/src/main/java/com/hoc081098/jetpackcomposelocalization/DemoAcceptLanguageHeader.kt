@@ -20,6 +20,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,15 +89,19 @@ internal fun DemoAcceptLanguageHeader(
   ) {
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      Button(onClick = viewModel::get) { Text("GET") }
-      OutlinedButton(onClick = viewModel::reset) { Text("Reset") }
+      Button(onClick = viewModel::get) {
+        Text(text = stringResource(id = R.string.demo_accept_language_get_button))
+      }
+      OutlinedButton(onClick = viewModel::reset) {
+        Text(text = stringResource(id = R.string.demo_accept_language_reset_button))
+      }
     }
 
     Spacer(modifier = Modifier.height(8.dp))
 
     when (val currentState = state) {
       DemoAcceptLanguageUiState.Idle ->
-        Text(text = "Press GET to call httpbin.org/get")
+        Text(text = stringResource(id = R.string.demo_accept_language_prompt))
 
       DemoAcceptLanguageUiState.Loading ->
         Row(
@@ -106,7 +111,7 @@ internal fun DemoAcceptLanguageHeader(
         ) {
           CircularProgressIndicator()
           Spacer(modifier = Modifier.width(8.dp))
-          Text(text = "Loading…")
+          Text(text = stringResource(id = R.string.demo_accept_language_loading))
         }
 
       is DemoAcceptLanguageUiState.Success -> {
@@ -115,16 +120,28 @@ internal fun DemoAcceptLanguageHeader(
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-          Text(text = "Response success", style = MaterialTheme.typography.titleSmall)
-          Text(text = "Response: ${currentState.data}")
+          Text(
+            text = stringResource(id = R.string.demo_accept_language_response_title),
+            style = MaterialTheme.typography.titleSmall,
+          )
+          Text(
+            text = stringResource(
+              id = R.string.demo_accept_language_response,
+              currentState.data.toString(),
+            ),
+          )
         }
       }
 
-      is DemoAcceptLanguageUiState.Error ->
+      is DemoAcceptLanguageUiState.Error -> {
+        val message = currentState.message
+          ?: stringResource(id = R.string.demo_accept_language_error_unknown)
+
         Text(
-          text = "Error: ${currentState.message ?: "unknown"}",
+          text = stringResource(id = R.string.demo_accept_language_error, message),
           color = MaterialTheme.colorScheme.error,
         )
+      }
     }
   }
 }
