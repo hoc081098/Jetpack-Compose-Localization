@@ -14,28 +14,34 @@ import java.util.Locale
 data class AppLocaleState(
   val currentLocale: Locale,
   val isFollowingSystem: Boolean,
-  val supportedLanguages: List<String>,
+  val supportedLocales: List<AppLocale>,
 ) {
+  @Immutable
+  sealed interface AppLocale {
+    data object FollowSystem : AppLocale
+
+    data class Language(val locale: Locale) : AppLocale
+  }
+
   @Stable
-  fun isCurrentLanguage(language: String): Boolean =
-    if (language == AppLocaleManager.FOLLOW_SYSTEM) {
-      isFollowingSystem
-    } else {
-      !isFollowingSystem && currentLocale.language == language
+  fun isCurrent(locale: AppLocale): Boolean =
+    when (locale) {
+      AppLocale.FollowSystem -> isFollowingSystem
+      is AppLocale.Language -> !isFollowingSystem && currentLocale == locale.locale
     }
 }
 
 @Stable
 class AppLocaleManager {
   private val supportedLanguages = buildList {
-    add(FOLLOW_SYSTEM)
+    add(AppLocaleState.AppLocale.FollowSystem)
 
-    // Split the comma-separated tags, trim whitespace, drop empties, and sort.
     addAll(
-      BuildConfig.SUPPORTED_LANGUAGE_CODES
+      BuildConfig.SUPPORTED_LOCALES
         .split(',')
-        .mapNotNull { v -> v.trim().takeIf { it.isNotEmpty() } }
         .sorted()
+        .distinct()
+        .map { AppLocaleState.AppLocale.Language(locale = Locale.forLanguageTag(it)) }
     )
   }
 
@@ -50,19 +56,23 @@ class AppLocaleManager {
       AppLocaleState(
         currentLocale = locale,
         isFollowingSystem = isFollowingSystem,
-        supportedLanguages = supportedLanguages,
+        supportedLocales = supportedLanguages,
       )
     }
   }
 
-  fun changeLanguage(language: String) {
-    Log.d(LOG_TAG, ">>> setApplicationLocales: to $language")
+  fun changeLanguage(locale: AppLocaleState.AppLocale) {
+    Log.d(LOG_TAG, ">>> setApplicationLocales: to $locale")
 
-    if (language == FOLLOW_SYSTEM) {
-      // Set empty locale list to follow system
-      AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
-    } else {
-      AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(Locale(language)))
+    when (locale) {
+      AppLocaleState.AppLocale.FollowSystem -> {
+        // Set empty locale list to follow system
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+      }
+
+      is AppLocaleState.AppLocale.Language -> {
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.create(locale.locale))
+      }
     }
 
     Log.d(LOG_TAG, ">>> getApplicationLocales: ${AppCompatDelegate.getApplicationLocales()}")
@@ -70,8 +80,6 @@ class AppLocaleManager {
 
   companion object {
     private val LOG_TAG = AppLocaleManager::class.java.simpleName
-
-    const val FOLLOW_SYSTEM = "Language#FollowSystem"
   }
 }
 

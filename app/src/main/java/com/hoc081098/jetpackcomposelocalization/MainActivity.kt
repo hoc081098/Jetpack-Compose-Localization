@@ -33,6 +33,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
 import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleManager
+import com.hoc081098.jetpackcomposelocalization.ui.locale.AppLocaleState
 import com.hoc081098.jetpackcomposelocalization.ui.locale.localizedDisplayName
 import com.hoc081098.jetpackcomposelocalization.ui.text.DateTimeFormatterCache
 import com.hoc081098.jetpackcomposelocalization.ui.theme.JetpackComposeLocalizationTheme
@@ -95,11 +96,11 @@ private fun MainScreen(modifier: Modifier = Modifier) {
             .weight(1f),
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-          appLocaleState.supportedLanguages.fastForEach { language ->
+          appLocaleState.supportedLocales.fastForEach { locale ->
             LanguageOption(
-              language = language,
-              isCurrent = appLocaleState.isCurrentLanguage(language),
-              changeLanguage = appLocaleManager::changeLanguage,
+              locale = locale,
+              isCurrent = appLocaleState.isCurrent(locale),
+              changeLanguage = { appLocaleManager.changeLanguage(locale) },
             )
           }
           DemoDateTimeFormatter(locale = appLocaleState.currentLocale)
@@ -112,9 +113,9 @@ private fun MainScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun LanguageOption(
-  language: String,
+  locale: AppLocaleState.AppLocale,
   isCurrent: Boolean,
-  changeLanguage: (language: String) -> Unit,
+  changeLanguage: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Text(
@@ -127,12 +128,14 @@ private fun LanguageOption(
         color = MaterialTheme.colorScheme.outline,
         shape = MaterialTheme.shapes.medium,
       )
-      .clickable(onClick = { changeLanguage(language) })
+      .clickable(onClick = changeLanguage)
       .padding(16.dp),
     text = buildString {
       append(
-        if (language == AppLocaleManager.FOLLOW_SYSTEM) stringResource(R.string.follow_system)
-        else remember(language) { Locale(language).localizedDisplayName }
+        when (locale) {
+          AppLocaleState.AppLocale.FollowSystem -> stringResource(R.string.follow_system)
+          is AppLocaleState.AppLocale.Language -> remember(locale) { locale.locale.localizedDisplayName }
+        }
       )
       append(if (isCurrent) " (current language)" else "")
     },

@@ -12,16 +12,22 @@ kotlin {
 }
 
 object Locales {
-  val supportedLocales: Set<String> = setOf(
+  val localeFilters = listOf(
     "en",
-    "en-rUS",
-    "vi",
     "vi-rVN",
   )
 
-  val supportedLanguageCodes: String = supportedLocales
-    .mapTo(LinkedHashSet()) { it.substringBefore("-r") }
-    .joinToString(separator = ",", prefix = "\"", postfix = "\"")
+  val supportedLocales: String =
+    localeFilters.joinToString(
+      separator = ",",
+      prefix = "\"",
+      postfix = "\""
+    ) {
+      it.replace(
+        oldValue = "-r",
+        newValue = "-"
+      )
+    }
 }
 
 android {
@@ -44,15 +50,15 @@ android {
       "!composepreference.preference.generated.resources",
     )
     generateLocaleConfig = true
-    localeFilters += Locales.supportedLocales
+    localeFilters += Locales.localeFilters
   }
 
   buildTypes {
     debug {
       buildConfigField(
         type = "String",
-        name = "SUPPORTED_LANGUAGE_CODES",
-        value = Locales.supportedLanguageCodes,
+        name = "SUPPORTED_LOCALES",
+        value = Locales.supportedLocales,
       )
     }
 
@@ -62,8 +68,8 @@ android {
 
       buildConfigField(
         type = "String",
-        name = "SUPPORTED_LANGUAGE_CODES",
-        value = Locales.supportedLanguageCodes,
+        name = "SUPPORTED_LOCALES",
+        value = Locales.supportedLocales,
       )
     }
   }
