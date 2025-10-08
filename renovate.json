@@ -5,12 +5,8 @@
   ],
   "commitBodyTable": true,
   "semanticCommits": "enabled",
-  "labels": [
-    "dependencies"
-  ],
-  "assignees": [
-    "hoc081098"
-  ],
+  "labels": [ "dependencies" ],
+  "assignees": [ "hoc081098" ],
   "packageRules": [
     {
       "matchPackagePatterns": [
